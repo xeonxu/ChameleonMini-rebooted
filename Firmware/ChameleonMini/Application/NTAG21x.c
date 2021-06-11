@@ -92,6 +92,7 @@
 
 static enum {
     TYPE_NTAG213,
+    TYPE_ULTRAMANZ,
     TYPE_NTAG215,
     TYPE_NTAG216
 } Ntag_Type;
@@ -152,7 +153,8 @@ static void NTAG21xAppInit(void) {
     Authenticated = false;
 
     switch (Ntag_Type) {
-    case TYPE_NTAG213: {
+    case TYPE_NTAG213:
+    case TYPE_ULTRAMANZ: {
         PageCount = NTAG213_PAGES;
         break;
     }
@@ -188,6 +190,132 @@ void NTAG213AppInit(void) {
 }
 
 #endif // CONIFG_NTAG213_SUPPORT
+
+#ifdef CONFIG_ULTRAMAN_SUPPORT
+
+void UltramanAppInit(void) {
+    Ntag_Type = TYPE_ULTRAMANZ;
+    PageCount = NTAG213_PAGES;
+    ConfigStartAddr = NTAG213_CONFIG_AREA_START_ADDRESS;
+    NTAG21xAppInit();
+}
+
+void Ultraman_ButtonFunc(uint8_t ultraman_type) {
+    Ultraman_Medal ultraman_code;
+    static uint8_t index = 1;
+    static uint8_t max_index;
+    ConfigurationUidType Uid;    
+
+    AppCardMemoryRead(&ultraman_code, ULTRAMAN_CODE_PAGE * NTAG21x_PAGE_SIZE, NTAG21x_PAGE_SIZE);
+
+    switch (ultraman_type) {
+    case ULTRAMAN_ACC_POS_TYPE: 
+    case ULTRAMAN_ACC_NEG_TYPE: {
+        max_index = 20;
+        break;
+    }
+    case ULTRAMAN_CHAR_POS_TYPE:
+    case ULTRAMAN_CHAR_NEG_TYPE: {
+        max_index = 128;
+        break;
+    }
+    default:
+        max_index = 20;
+        break;
+    }
+    if (ultraman_code.type != ultraman_type) {
+        ultraman_code.type = ultraman_type;
+        if (ultraman_type == ULTRAMAN_ACC_POS_TYPE
+            || ultraman_type == ULTRAMAN_ACC_NEG_TYPE) {
+            ultraman_code.type2 = 0x01;
+        }
+    }
+    ultraman_code.index = index;
+
+    if (index++ > max_index) {
+        index = 1;
+    }
+
+    ultraman_code.sum = ultraman_code.type + ultraman_code.index + ultraman_code.type2;
+
+    AppWritePage(ULTRAMAN_CODE_PAGE, (uint8_t *)&ultraman_code);
+
+    NTAG21xGetUid(Uid);
+
+    memcpy(&Uid[0], &ultraman_code, 3);
+
+    NTAG21xSetUid(Uid);
+}
+
+void Z_ACC_POS_ButtonFunc(void) {
+    Ultraman_ButtonFunc(ULTRAMAN_ACC_POS_TYPE);
+    /* Ultraman_Medal ultraman_code; */
+    /* static uint8_t index = 1; */
+
+    /* AppCardMemoryRead(&ultraman_code, ULTRAMAN_CODE_PAGE * NTAG21x_PAGE_SIZE, NTAG21x_PAGE_SIZE); */
+
+    /* if (ultraman_code.type != 0x01) { */
+    /*     ultraman_code.type = 0x01; */
+    /*     ultraman_code.type2 = 0x01; */
+    /* } */
+    /* ultraman_code.index = index; */
+
+    /* if (index++ > 0x20) { */
+    /*     index = 1; */
+    /* } */
+
+    /* ultraman_code.sum = ultraman_code.type + ultraman_code.index + ultraman_code.type2; */
+
+    /* AppCardMemoryWrite(&ultraman_code, ULTRAMAN_CODE_PAGE * NTAG21x_PAGE_SIZE, 4); */
+}
+
+void Z_ACC_NEG_ButtonFunc(void) {
+    Ultraman_ButtonFunc(ULTRAMAN_ACC_NEG_TYPE);
+}
+
+void Z_CHAR_POS_ButtonFunc(void) {
+    Ultraman_ButtonFunc(ULTRAMAN_CHAR_POS_TYPE);
+    /* Ultraman_Medal ultraman_code; */
+    
+    /* AppCardMemoryRead(&ultraman_code, ULTRAMAN_CODE_PAGE * NTAG21x_PAGE_SIZE, NTAG21x_PAGE_SIZE); */
+
+    /* if (ultraman_code.type != 0x04) { */
+    /*     ultraman_code.type = 0x04; */
+    /*     ultraman_code.type2 = 0x00; */
+    /*     ultraman_code.index = 0x01; */
+    /* } */
+    /* ultraman_code.sum = ultraman_code.type + ultraman_code.index + ultraman_code.type2; */
+
+    /* AppWritePage(ULTRAMAN_CODE_PAGE, (uint8_t *)&ultraman_code); */
+
+    /* if (++ultraman_code.index > 0x80) { */
+    /*     ultraman_code.index = 0x01; */
+    /* } */
+
+}
+
+void Z_CHAR_NEG_ButtonFunc(void) {
+    Ultraman_ButtonFunc(ULTRAMAN_CHAR_NEG_TYPE);
+
+    /* Ultraman_Medal ultraman_code; */
+    
+    /* AppCardMemoryRead(&ultraman_code, ULTRAMAN_CODE_PAGE * NTAG21x_PAGE_SIZE, NTAG21x_PAGE_SIZE); */
+
+    /* if (ultraman_code.type != 0x05) { */
+    /*     ultraman_code.type = 0x05; */
+    /*     ultraman_code.type2 = 0x00; */
+    /*     ultraman_code.index = 0x01; */
+    /* } */
+    /* ultraman_code.sum = ultraman_code.type + ultraman_code.index + ultraman_code.type2; */
+
+    /* AppWritePage(ULTRAMAN_CODE_PAGE, (uint8_t *)&ultraman_code); */
+
+    /*  if (++ultraman_code.index > 0x80) { */
+    /*      ultraman_code.index = 0x01; */
+    /*  } */
+}
+
+#endif // CONFIG_ULTRAMAN_SUPPORT
 
 #ifdef CONFIG_NTAG215_SUPPORT
 
@@ -325,10 +453,20 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             /* TODO: IMPLEMENT COUNTER AUTHLIM */
 
             /* Read and compare the password */
-            AppCardMemoryRead(Password, ConfigStartAddr + CONF_PASSWORD_OFFSET, 4);
-            if (Password[0] != Buffer[1] || Password[1] != Buffer[2] || Password[2] != Buffer[3] || Password[3] != Buffer[4]) {
-                Buffer[0] = NAK_NOT_AUTHED;
-                return NAK_FRAME_SIZE;
+            switch (Ntag_Type) {
+
+            /* Disable PWD AUTH for Ultraman Z */
+            case TYPE_ULTRAMANZ: {
+                
+                break;
+            }
+            default:
+                AppCardMemoryRead(Password, ConfigStartAddr + CONF_PASSWORD_OFFSET, 4);
+                if (Password[0] != Buffer[1] || Password[1] != Buffer[2] || Password[2] != Buffer[3] || Password[3] != Buffer[4]) {
+                    Buffer[0] = NAK_NOT_AUTHED;
+                    return NAK_FRAME_SIZE;
+                }
+                break;
             }
             /* Authenticate the user */
             //RESET AUTHLIM COUNTER, CURRENTLY NOT IMPLEMENTED

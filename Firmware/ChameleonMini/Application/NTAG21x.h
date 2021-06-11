@@ -7,6 +7,7 @@
 
 #ifndef NTAG21x_H_
 #define NTAG21x_H_
+#include "Ultraman-Z.h"
 #include "Application.h"
 #include "ISO14443-3A.h"
 
