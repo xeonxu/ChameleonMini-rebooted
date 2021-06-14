@@ -191,7 +191,7 @@ void NTAG213AppInit(void) {
 
 #endif // CONIFG_NTAG213_SUPPORT
 
-#ifdef CONFIG_ULTRAMAN_SUPPORT
+#ifdef CONFIG_ULTRAMANZ_SUPPORT
 
 void UltramanAppInit(void) {
     Ntag_Type = TYPE_ULTRAMANZ;
@@ -200,23 +200,23 @@ void UltramanAppInit(void) {
     NTAG21xAppInit();
 }
 
-void Ultraman_ButtonFunc(uint8_t ultraman_type) {
+static void UltramanZ_ButtonFunc(uint8_t ultraman_type) {
     Ultraman_Medal ultraman_code;
     uint8_t magic_code[4];
     static uint8_t index = 1;
     static uint8_t max_index;
     ConfigurationUidType Uid;    
 
-    AppCardMemoryRead(&ultraman_code, ULTRAMAN_CODE_PAGE * NTAG21x_PAGE_SIZE, NTAG21x_PAGE_SIZE);
+    AppCardMemoryRead(&ultraman_code, ULTRAMANZ_CODE_PAGE * NTAG21x_PAGE_SIZE, NTAG21x_PAGE_SIZE);
 
     switch (ultraman_type) {
-    case ULTRAMAN_ACC_POS_TYPE: 
-    case ULTRAMAN_ACC_NEG_TYPE: {
+    case ULTRAMANZ_ACC_POS_TYPE:
+    case ULTRAMANZ_ACC_NEG_TYPE: {
         max_index = 20;
         break;
     }
-    case ULTRAMAN_CHAR_POS_TYPE:
-    case ULTRAMAN_CHAR_NEG_TYPE: {
+    case ULTRAMANZ_CHAR_POS_TYPE:
+    case ULTRAMANZ_CHAR_NEG_TYPE: {
         max_index = 128;
         break;
     }
@@ -226,8 +226,8 @@ void Ultraman_ButtonFunc(uint8_t ultraman_type) {
     }
     if (ultraman_code.type != ultraman_type) {
         ultraman_code.type = ultraman_type;
-        if (ultraman_type == ULTRAMAN_ACC_POS_TYPE
-            || ultraman_type == ULTRAMAN_ACC_NEG_TYPE) {
+        if (ultraman_type == ULTRAMANZ_ACC_POS_TYPE
+            || ultraman_type == ULTRAMANZ_ACC_NEG_TYPE) {
             ultraman_code.type2 = 0x01;
         }
         magic_code[0] = 0xba;
@@ -249,7 +249,7 @@ void Ultraman_ButtonFunc(uint8_t ultraman_type) {
 
     ultraman_code.sum = ultraman_code.type + ultraman_code.index + ultraman_code.type2;
 
-    AppWritePage(ULTRAMAN_CODE_PAGE, (uint8_t *)&ultraman_code);
+    AppWritePage(ULTRAMANZ_CODE_PAGE, (uint8_t *)&ultraman_code);
 
     NTAG21xGetUid(Uid);
 
@@ -259,22 +259,22 @@ void Ultraman_ButtonFunc(uint8_t ultraman_type) {
 }
 
 void Z_ACC_POS_ButtonFunc(void) {
-    Ultraman_ButtonFunc(ULTRAMAN_ACC_POS_TYPE);
+    UltramanZ_ButtonFunc(ULTRAMANZ_ACC_POS_TYPE);
 }
 
 void Z_ACC_NEG_ButtonFunc(void) {
-    Ultraman_ButtonFunc(ULTRAMAN_ACC_NEG_TYPE);
+    UltramanZ_ButtonFunc(ULTRAMANZ_ACC_NEG_TYPE);
 }
 
 void Z_CHAR_POS_ButtonFunc(void) {
-    Ultraman_ButtonFunc(ULTRAMAN_CHAR_POS_TYPE);
+    UltramanZ_ButtonFunc(ULTRAMANZ_CHAR_POS_TYPE);
 }
 
 void Z_CHAR_NEG_ButtonFunc(void) {
-    Ultraman_ButtonFunc(ULTRAMAN_CHAR_NEG_TYPE);
+    UltramanZ_ButtonFunc(ULTRAMANZ_CHAR_NEG_TYPE);
 }
 
-#endif // CONFIG_ULTRAMAN_SUPPORT
+#endif // CONFIG_ULTRAMANZ_SUPPORT
 
 #ifdef CONFIG_NTAG215_SUPPORT
 
