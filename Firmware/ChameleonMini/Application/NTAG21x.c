@@ -202,6 +202,7 @@ void UltramanAppInit(void) {
 
 void Ultraman_ButtonFunc(uint8_t ultraman_type) {
     Ultraman_Medal ultraman_code;
+    uint8_t magic_code[4];
     static uint8_t index = 1;
     static uint8_t max_index;
     ConfigurationUidType Uid;    
@@ -229,10 +230,20 @@ void Ultraman_ButtonFunc(uint8_t ultraman_type) {
             || ultraman_type == ULTRAMAN_ACC_NEG_TYPE) {
             ultraman_code.type2 = 0x01;
         }
+        magic_code[0] = 0xba;
+        magic_code[1] = 0xbd;
+        magic_code[2] = 0x10;
+        magic_code[3] = 0x20;
+        AppWritePage(29, magic_code);
+        magic_code[0] = 0xbe;
+        magic_code[1] = 0xef;
+        magic_code[2] = 0x00;
+        magic_code[3] = 0x00;
+        AppCardMemoryWrite(magic_code, ConfigStartAddr + CONF_PACK_OFFSET, 4);
     }
     ultraman_code.index = index;
 
-    if (index++ > max_index) {
+    if (++index > max_index) {
         index = 1;
     }
 
@@ -242,31 +253,13 @@ void Ultraman_ButtonFunc(uint8_t ultraman_type) {
 
     NTAG21xGetUid(Uid);
 
-    memcpy(&Uid[0], &ultraman_code, 3);
+    memcpy(&Uid[4], &ultraman_code, 3);
 
     NTAG21xSetUid(Uid);
 }
 
 void Z_ACC_POS_ButtonFunc(void) {
     Ultraman_ButtonFunc(ULTRAMAN_ACC_POS_TYPE);
-    /* Ultraman_Medal ultraman_code; */
-    /* static uint8_t index = 1; */
-
-    /* AppCardMemoryRead(&ultraman_code, ULTRAMAN_CODE_PAGE * NTAG21x_PAGE_SIZE, NTAG21x_PAGE_SIZE); */
-
-    /* if (ultraman_code.type != 0x01) { */
-    /*     ultraman_code.type = 0x01; */
-    /*     ultraman_code.type2 = 0x01; */
-    /* } */
-    /* ultraman_code.index = index; */
-
-    /* if (index++ > 0x20) { */
-    /*     index = 1; */
-    /* } */
-
-    /* ultraman_code.sum = ultraman_code.type + ultraman_code.index + ultraman_code.type2; */
-
-    /* AppCardMemoryWrite(&ultraman_code, ULTRAMAN_CODE_PAGE * NTAG21x_PAGE_SIZE, 4); */
 }
 
 void Z_ACC_NEG_ButtonFunc(void) {
@@ -275,44 +268,10 @@ void Z_ACC_NEG_ButtonFunc(void) {
 
 void Z_CHAR_POS_ButtonFunc(void) {
     Ultraman_ButtonFunc(ULTRAMAN_CHAR_POS_TYPE);
-    /* Ultraman_Medal ultraman_code; */
-    
-    /* AppCardMemoryRead(&ultraman_code, ULTRAMAN_CODE_PAGE * NTAG21x_PAGE_SIZE, NTAG21x_PAGE_SIZE); */
-
-    /* if (ultraman_code.type != 0x04) { */
-    /*     ultraman_code.type = 0x04; */
-    /*     ultraman_code.type2 = 0x00; */
-    /*     ultraman_code.index = 0x01; */
-    /* } */
-    /* ultraman_code.sum = ultraman_code.type + ultraman_code.index + ultraman_code.type2; */
-
-    /* AppWritePage(ULTRAMAN_CODE_PAGE, (uint8_t *)&ultraman_code); */
-
-    /* if (++ultraman_code.index > 0x80) { */
-    /*     ultraman_code.index = 0x01; */
-    /* } */
-
 }
 
 void Z_CHAR_NEG_ButtonFunc(void) {
     Ultraman_ButtonFunc(ULTRAMAN_CHAR_NEG_TYPE);
-
-    /* Ultraman_Medal ultraman_code; */
-    
-    /* AppCardMemoryRead(&ultraman_code, ULTRAMAN_CODE_PAGE * NTAG21x_PAGE_SIZE, NTAG21x_PAGE_SIZE); */
-
-    /* if (ultraman_code.type != 0x05) { */
-    /*     ultraman_code.type = 0x05; */
-    /*     ultraman_code.type2 = 0x00; */
-    /*     ultraman_code.index = 0x01; */
-    /* } */
-    /* ultraman_code.sum = ultraman_code.type + ultraman_code.index + ultraman_code.type2; */
-
-    /* AppWritePage(ULTRAMAN_CODE_PAGE, (uint8_t *)&ultraman_code); */
-
-    /*  if (++ultraman_code.index > 0x80) { */
-    /*      ultraman_code.index = 0x01; */
-    /*  } */
 }
 
 #endif // CONFIG_ULTRAMAN_SUPPORT
@@ -372,7 +331,8 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             Buffer[4] = 0x01;
             Buffer[5] = 0x00;
             switch (Ntag_Type) {
-            case TYPE_NTAG213: {
+            case TYPE_NTAG213:
+            case TYPE_ULTRAMANZ: {
                 Buffer[6] = 0x0F;
                 break;
             }
@@ -457,7 +417,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
 
             /* Disable PWD AUTH for Ultraman Z */
             case TYPE_ULTRAMANZ: {
-                
+                AppCardMemoryWrite(&Buffer[1], ConfigStartAddr + CONF_PASSWORD_OFFSET, 4);
                 break;
             }
             default:
