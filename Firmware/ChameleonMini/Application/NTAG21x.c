@@ -79,17 +79,6 @@
 //SIGNATURE Lenght
 #define SIGNATURE_LENGTH        32
 
-/* #define NTAG21x_UID_SIZE ISO14443A_UID_SIZE_DOUBLE //7 bytes UID */
-
-/* #define NTAG21x_PAGE_SIZE 4 //bytes per page */
-/* #define NTAG213_PAGES 45 //45 pages total for ntag213, from 0 to 44 */
-/* #define NTAG215_PAGES 135 //135 pages total for ntag215, from 0 to 134 */
-/* #define NTAG216_PAGES 231 //231 pages total for ntag216, from 0 to 230 */
-
-/* #define NTAG213_MEM_SIZE ( NTAG21x_PAGE_SIZE * NTAG213_PAGES ) */
-/* #define NTAG215_MEM_SIZE ( NTAG21x_PAGE_SIZE * NTAG215_PAGES ) */
-/* #define NTAG216_MEM_SIZE ( NTAG21x_PAGE_SIZE * NTAG216_PAGES ) */
-
 static enum {
     TYPE_NTAG213,
     TYPE_ULTRAMANZ,
@@ -156,14 +145,17 @@ static void NTAG21xAppInit(void) {
     case TYPE_NTAG213:
     case TYPE_ULTRAMANZ: {
         PageCount = NTAG213_PAGES;
+        ConfigStartAddr = NTAG213_CONFIG_AREA_START_ADDRESS;
         break;
     }
     case TYPE_NTAG215: {
         PageCount = NTAG215_PAGES;
+        ConfigStartAddr = NTAG215_CONFIG_AREA_START_ADDRESS;
         break;
     }
     case TYPE_NTAG216: {
         PageCount = NTAG216_PAGES;
+        ConfigStartAddr = NTAG216_CONFIG_AREA_START_ADDRESS;
         break;
     }
     default:
@@ -184,8 +176,6 @@ void NTAG21xAppReset(void) {
 
 void NTAG213AppInit(void) {
     Ntag_Type = TYPE_NTAG213;
-    PageCount = NTAG213_PAGES;
-    ConfigStartAddr = NTAG213_CONFIG_AREA_START_ADDRESS;
     NTAG21xAppInit();
 }
 
@@ -280,8 +270,6 @@ void Z_CHAR_NEG_ButtonFunc(void) {
 
 void NTAG215AppInit(void) {
     Ntag_Type = TYPE_NTAG215;
-    PageCount = NTAG215_PAGES;
-    ConfigStartAddr = NTAG215_CONFIG_AREA_START_ADDRESS;
     NTAG21xAppInit();
 }
 
@@ -291,8 +279,6 @@ void NTAG215AppInit(void) {
 
 void NTAG216AppInit(void) {
     Ntag_Type = TYPE_NTAG216;
-    PageCount = NTAG216_PAGES;
-    ConfigStartAddr = NTAG216_CONFIG_AREA_START_ADDRESS;
     NTAG21xAppInit();
 }
 
