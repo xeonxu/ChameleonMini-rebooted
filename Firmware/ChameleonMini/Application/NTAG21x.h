@@ -5,6 +5,8 @@
  *      Author: gcammisa
  */
 
+#if ((defined CONFIG_NTAG213_SUPPORT) || (defined CONFIG_NTAG215_SUPPORT) || (defined CONFIG_NTAG216_SUPPORT))
+	
 #ifndef NTAG21x_H_
 #define NTAG21x_H_
 #include "Ultraman-Z.h"
@@ -39,5 +41,7 @@ uint16_t NTAG21xAppProcess(uint8_t *Buffer, uint16_t BitCount);
 
 void NTAG21xGetUid(ConfigurationUidType Uid);
 void NTAG21xSetUid(ConfigurationUidType Uid);
+
+#endif
 
 #endif

@@ -8,6 +8,8 @@
  *      -Bruteforce protection (AUTHLIM COUNTER)
  *  Thanks to skuser for the MifareUltralight code used as a starting point
  */
+ 
+#if ((defined CONFIG_NTAG213_SUPPORT) || (defined CONFIG_NTAG215_SUPPORT) || (defined CONFIG_NTAG216_SUPPORT))
 
 #include "NTAG21x.h"
 #include "ISO14443-3A.h"
@@ -408,9 +410,11 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             }
             default:
                 AppCardMemoryRead(Password, ConfigStartAddr + CONF_PASSWORD_OFFSET, 4);
-                if (Password[0] != Buffer[1] || Password[1] != Buffer[2] || Password[2] != Buffer[3] || Password[3] != Buffer[4]) {
-                    Buffer[0] = NAK_NOT_AUTHED;
-                    return NAK_FRAME_SIZE;
+                if(!AppMemoryUidMode()) {
+                    if (Password[0] != Buffer[1] || Password[1] != Buffer[2] || Password[2] != Buffer[3] || Password[3] != Buffer[4]) {
+                        Buffer[0] = NAK_NOT_AUTHED;
+                        return NAK_FRAME_SIZE;
+                    }
                 }
                 break;
             }
@@ -419,6 +423,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             Authenticated = 1;
             /* Send the PACK value back */
             AppCardMemoryRead(Buffer, ConfigStartAddr + CONF_PACK_OFFSET, 2);
+
             ISO14443AAppendCRCA(Buffer, 2);
             return (2 + ISO14443A_CRCA_SIZE) * 8;
         }
@@ -588,3 +593,5 @@ uint16_t NTAG21xAppProcess(uint8_t *Buffer, uint16_t BitCount) {
     /* No response has been sent, when we reach here */
     return ISO14443A_APP_NO_RESPONSE;
 }
+
+#endif
